@@ -22,6 +22,50 @@ window.onpageshow= function() {
     };
 };
 
+const HELP = { // This is used to store text for certain things. Used for help popups with only static text!
+    "C": `
+        Clicks (C) are the basic currency.<br>
+        You can see how many Clicks you have by looking at the first line of text at the top left!<br>
+        You gain Clicks by clicking on the Clicker and every second if you have any CPS.<br>
+        You can also buy upgrades with them from the shop.
+    `,
+    "CPS": `
+        Clicks Per Second (CPS) is the amount of Clicks you gain every second.<br>
+        You can see how many Clicks Per Second you have by looking at the second line of text at the top left!<br>
+        You gain Clicks Per Second by purchasing upgrades from the shop such as the Auto Clicker.
+    `,
+    "CPC": `
+        Clicks Per Click (CPC) is the amount of Clicks you gain every time you click the Clicker.<br>
+        You can see how many Clicks Per Click you have by looking at the third line of text at the top left!<br>
+        You gain Clicks Per Click by purchasing upgrades from the shop such as the Super Click.
+    `,
+    "CPSV": `
+        Clicks Per Second Value (CPSV) is the multiplier applied to each CPS upgrade.<br>
+        For example, a CPSV of 2x would make the Auto Clicker upgrade give +10CPS instead of +5CPS.<br>
+        You can see what your CPSV multiplier is by looking at the fourth line of text at the top left!<br>
+        You gain CPSV by purchasing upgrades from the shop such as the More Efficient Auto Clickers.<br>
+        These shop upgrades will also apply the new CPSV value to your current CPS!
+    `,
+    "CPCV": `
+        Clicks Per Click Value (CPCV) is the multiplier applied to each CPS upgrade.<br>
+        For example, a CPCV of 2x would make the Super Click upgrade give +2CPC instead of +1CPC.<br>
+        You can see what your CPCV multiplier is by looking at the fifth line of text at the top left!<br>
+        You gain CPCV by purchasing upgrades from the shop such as the More Efficient Super Clicks.<br>
+        These shop upgrades will also apply the new CPCV value to your current CPC!
+    `,
+    "Home": `
+        Welcome to Help!<br>
+        Here you can flip through all of the Help pages.<br>
+        Instead of using this, you can also just hold CTRL to turn on Help mode and click on a supported element!<br>
+        Supported elements will turn add a little '?' to your cursor when hovering over items while in Help mode.<br>
+        Also, most elements (both supported and unsupported by Help mode) will show a little tip when hovering over them!<br>
+        Some will show keys you can press instead of clicking them (eg. Space will click the clicker)!
+    `
+};
+
+// theshieldhero : $1M (better than poopcock)
+// poopcock : 1MC
+
 // Building block classes
 const keys = {"Control":false,"Space":false};
 class vector2 {
@@ -139,41 +183,83 @@ class button {
 document.getElementById("prompt").style.scale = 4;
 document.getElementById("prI").value = "";
 
+function contains(x,y) {
+    return x.includes(y);
+};
+
 // Shop Items
 class shopItem {
+    forceHide=false;
     name="";
     desc="";
     price=0;
+    uses=false;
+    config = {
+        "hideOnMaxUses": false
+    };
+    setConfig=function(x={},key=null){ // x: {key:value}|value
+        if (key != null) {
+            if (this.config[key] != null) {
+                if (typeof(x) == typeof(this.config[key])) {
+                    this.config[key] = x;
+                };
+            };
+        } else if (Object.keys(x).length > 0) {
+            for (let i=0; i<Object.keys(x).length;i++) {
+                const k = Object.keys(x)[i];
+                const v = x[k];
+                if (this.config[k] != null) {
+                    if (typeof(v) === typeof(this.config[k])) {
+                        this.config[k] = v;
+                    };
+                };
+            };
+        };
+    };
     func=function(){};
     _obj=new button;
     id="";
     updateText(x="") {
         let el = document.getElementById(this.id);
         if (!el) {return};
+        this.requirements(this);
         if (x != "") {
             el.innerHTML = x;
         } else {
-            let t = `${this.name} (${readableNum(this.price)}C) [x${this.owned}]`;
+            let t = `${this.name} (${readableNum(this.price)}C) [${(this.uses == false) ? "x":""}${readableNum(this.owned)}${(this.uses == false) ? "":`/${readableNum(this.uses)}`}]`;
             el.innerHTML = t;
         };
     };
-    constructor(_name="Shop Item",_desc="Shop Item",_price=0,_pmul=1.2,_bought=function(){CPS++},_id="",__obj=new button) { //pmul: float|function
+    constructor(_name="Shop Item",_desc="Shop Item",_price=0,_pmul=1.2,_bought=function(){CPS++},_id="",_uses=false,_parentid="shop",_config={},_requirements=function(x){let el = document.getElementById(x.id); el.style.display = "block"; return true;},__obj=new button) { //pmul: float|function, _uses: bool|num
+        this.forceHide = false;
         this.name = _name;
         this.desc = _desc;
         this.initPrice = _price;
         this.price = _price;
         this.owned=0;
         this._obj = __obj;
-        this._obj.text = this.name
-        this.pmul = _pmul
-        this.bought = _bought
+        this._obj.text = this.name;
+        this.pmul = _pmul;
+        this.bought = _bought;
+        this.uses = _uses;
+        this.parentid = _parentid;
+        this.setConfig(_config);
+        this.requirements = _requirements
         this.func = () => {
-            console.log(this.price);
-            if (COOKIES >= this.price) {
-                console.log(COOKIES-this.price);
+            // console.log(this.price);
+            if (COOKIES >= this.price & (this.uses == false || (this.uses != false & this.owned < this.uses))) {
+                if (!this.requirements(this)) {return};
+                // console.log(COOKIES-this.price);
                 this.bought();
                 updateCookies(COOKIES-this.price);
+                updateStatus();
                 this.owned++;
+                console.log(`hideOnMaxUses: ${this.config["hideOnMaxUses"]}`);
+                console
+                if ((this.uses != false) & (this.owned >= this.uses) & (this.config["hideOnMaxUses"])) {
+                    let el = document.getElementById(this.id);
+                    el.style.display = "none";
+                };
                 if (typeof(this.pmul) == "number") {
                     this.price=Math.round(this.price*this.pmul);
                 } else if (typeof(this.pmul) == "function") {
@@ -187,7 +273,7 @@ class shopItem {
             this.id = _id;
             this._obj._obj.elemData.id = _id;
         };
-        let el = document.getElementById('shop');
+        let el = document.getElementById(this.parentid);
         this._obj.create(el? el : document.body);
         let _el = document.getElementById(this.id);
         if (_el) {
@@ -197,24 +283,48 @@ class shopItem {
     };
 };
 
+function clamp(x, min=0, max=100) {
+    return Math.min(Math.max(this, min), max);
+};
+
 const shopItems = [
-    new shopItem("Auto Clicker","+4 CPS",50,function(x){const y=[100,165,235,300,425,575,750];console.log(x.owned,y.length);return ((x.owned-1 <= y.length-1) ? y[x.owned-1] : Math.round(Math.pow(x.price,1.1)));},function(){CPS+=(4*CPSV)},"cps1"),
+    new shopItem("Auto Clicker","+5 CPS",50,function(x){const y=[100,165,235,300,425,575,750];console.log(x.owned,y.length);return ((x.owned-1 <= y.length-1) ? y[x.owned-1] : x.price*1.05);},function(){CPS+=(5*CPSV)},"cps1"),
     new shopItem("Super Click","+1 CPC",100,1.4,function(){CPC+=(1*CPCV)},"cpc1"),
-    new shopItem("Doubly Efficient Auto Clickers","Double CPS, +2 CPSV",1000,function(x){return Math.round(Math.pow(x.price,1.5));},function(){CPSV+=2;CPS=(CPS/(CPSV-1))*CPSV;},"cps2"),
-    new shopItem("Doubly Efficient Clicks","Double CPC, +1 CPCV",1750,function(x){return Math.round(Math.pow(x.price,1.6));},function(){CPCV+=1;CPC=(CPC/(CPCV-1))*CPCV;},"cpc2")
+    new shopItem("More Efficient Auto Clickers","Double CPS, *4 CPSV",1000,function(x){return Math.round(Math.pow(x.price,1.2));},function(){CPS/=CPSV;CPSV*=4;CPS*=CPSV;},"cps2"),
+    new shopItem("More Efficient Super Clicks","Double CPC, *4 CPCV",1750,function(x){return Math.round(Math.pow(x.price,1.2));},function(){CPC/=CPCV;CPCV*=4;CPC*=CPCV;},"cpc2")
 ];
 
-function openPrompt(title="Prompt",txt0="Confirm",txt1="Cancel",txti="",f0=closePrompt,f1=closePrompt) {
+const upgrItems = [
+    new shopItem("Clicker","*2x CPCV",500,1,function(x){CPCV*=2},"u_cpcv1",1,"upgr",{"hideOnMaxUses":true},function(x){
+        let el = document.getElementById(x.id);
+        if (el) {el.style.display = (shopItems[1].owned >= 10 && (x.owned < x.uses && x.config["hideOnMaxUses"])) ? "block":"none";};
+        return shopItems[1].owned >= 10;
+    })
+];
+
+const updateItems = [
+    ...shopItems,...upgrItems
+];
+
+function openPrompt(title="Prompt",txt0="Confirm",txt1="Cancel",txt2="Close",txti="",txtb="",f0=closePrompt,f1=closePrompt,f2=closePrompt) {
     let x = document.getElementById("prompt");
     if (x) {
         // Set Data
         let t = document.getElementById("prT");
+        let b = document.getElementById("prB");
         let i = document.getElementById("prI");
         let b0 = document.getElementById("pr0");
         let b1 = document.getElementById("pr1");
+        let b2 = document.getElementById("pr2");
         t.innerHTML = title;
-        if (txti.length > 0) {
-            i.value = txti;
+        b.innerHTML = txtb;
+        if (txti != null) {
+            i.style.display = "block";
+            if (txti.length > 0) {
+                i.value = txti;
+            };
+        } else {
+            i.style.display = "none";
         };
         if (txt0.length > 0) {
             b0.style.display = "block";
@@ -230,6 +340,13 @@ function openPrompt(title="Prompt",txt0="Confirm",txt1="Cancel",txti="",f0=close
         } else {
             b1.style.display = "none";
         };
+        if (txt2.length > 0) {
+            b2.style.display = "block";
+            b2.innerHTML = txt2;
+            b2.onclick = f2;
+        } else {
+            b2.style.display = "none";
+        };
         // Prep
         x.style.pointerEvents = "all";
         x.style.transition = 'all 0ms linear';
@@ -244,7 +361,29 @@ function openPrompt(title="Prompt",txt0="Confirm",txt1="Cancel",txti="",f0=close
         x.offsetWidth;
         x.style.transition = 'all 200ms cubic-bezier(0,1,1,1)';
     };
-}
+};
+
+var helpPage = Object.keys(HELP).length-1;
+
+function openHelp() {
+    openPrompt(`Help: ${Object.keys(HELP)[helpPage]}`,"<<","Close",">>",null,Object.values(HELP)[helpPage],
+        function() { // <<
+            helpPage--;
+            if (helpPage < 0) {
+                helpPage = Object.keys(HELP).length-1;
+            };
+            openHelp();
+        },
+        closePrompt, // Close
+        function() { // >>
+            helpPage++;
+            if (helpPage > Object.keys(HELP).length-1) {
+                helpPage = 0;
+            };
+            openHelp();
+        }
+    );
+};
 
 function closePrompt() {
     let x = document.getElementById("prompt");
@@ -277,7 +416,7 @@ function getSaveCode() {
     let result = JSON.stringify(dataDict);
     result = btoa(result);
     console.log(result);
-    openPrompt("Save Code","Copy","Close",result,function(){
+    openPrompt("Save Code","Copy","Close","",result,"Copy this code and load it later to save keep progress!",function(){
         document.getElementById("prI").select();
         document.getElementById("prI").setSelectionRange(0,result.length);
         navigator.clipboard.writeText(result);
@@ -294,6 +433,8 @@ function loadSaveCode() {
         "Load",
         "Cancel",
         "",
+        "",
+        "Paste your save code in here to load your previous progress!",
         function() {
             let code = document.getElementById("prI").value;
             console.log(code);
@@ -495,21 +636,71 @@ function readableNum(n = 0) {
         }
     }
     return n + y;
-}
-function updateCookies(x=0) {
-    let el = document.getElementById('tcookie');
+};
+function updateCookies(x=-1) {
+    let el = document.getElementById('tcookie-C');
     if (el && typeof(x) == "number") {
-        COOKIES = x;
+        if (x >= 0) {
+            COOKIES = x;
+        };
         let r_COOKIES = readableNum(COOKIES.toString());
-        let r_CPS = readableNum(CPS);
-        let r_CPC = readableNum(CPC);
-        let r_CPSV = readableNum(CPSV);
-        let r_CPCV = readableNum(CPCV);
-        el.innerHTML = `${r_COOKIES}C<br>${r_CPS}C/s<br>${r_CPC}C/c<br>${r_CPSV}xCPS<br>${r_CPCV}xCPC`;
-        el.title = `${COOKIES} ${((COOKIES != 1) ? "Clicks" : "Click")} (C)\n${CPS} ${((CPS != 1) ? "Clicks" : "Click")} Per Second (CPS)\n${CPC} ${((CPC != 1) ? "Clicks" : "Click")} Per Click (CPC)\n${CPSV}x CPS Value Multiplier (CPSV)\n${CPCV}x CPC Value Multiplier (CPCV)`;
+        el.innerHTML = `${r_COOKIES} C`;
+        el.title = `${COOKIES} ${((COOKIES != 1) ? "Clicks" : "Click")} (C)`;
     };
 };
-updateCookies()
+function updateStatus(el=["CPS","CPC","CPSV","CPCV"]) {
+    if (el) {
+        function _r(x="") {
+            let e = document.getElementById(`tcookie-${x}`);
+            if (e) {
+                if (x == "CPS") {
+                    let r = readableNum(CPS);
+                    e.innerHTML = `${r} C/s`;
+                    e.title = `${CPS} ${((CPS != 1) ? "Clicks" : "Click")} Per Second (CPS)`;
+                } else if (x == "CPC") {
+                    let r = readableNum(CPC);
+                    e.innerHTML = `${r} C/c`;
+                    e.title = `${CPC} ${((CPC != 1) ? "Clicks" : "Click")} Per Click (CPC)`;
+                } else if (x == "CPSV") {
+                    let r = readableNum(CPSV);
+                    e.innerHTML = `${r} xCPS`;
+                    e.title = `${CPSV} x CPS Value Multiplier (CPSV)`;
+                } else if (x == "CPCV") {
+                    let r = readableNum(CPCV);
+                    e.innerHTML = `${r} xCPC`;
+                    e.title = `${CPCV} x CPC Value Multiplier (CPCV)`;
+                };
+            };
+        };
+        if (typeof(el) == "string") {
+            _r(el);
+        } else {
+            el.forEach(x => {
+                _r(x);
+            });
+        };
+    };
+    // let r_CPS = readableNum(CPS);
+    // let r_CPC = readableNum(CPC);
+    // let r_CPSV = readableNum(CPSV);
+    // let r_CPCV = readableNum(CPCV);
+    // el.innerHTML = `${r_COOKIES}C<br>${r_CPS}C/s<br>${r_CPC}C/c<br>${r_CPSV}xCPS<br>${r_CPCV}xCPC`;
+    // el.title = `${COOKIES} ${((COOKIES != 1) ? "Clicks" : "Click")} (C)\n${CPS} ${((CPS != 1) ? "Clicks" : "Click")} Per Second (CPS)\n${CPC} ${((CPC != 1) ? "Clicks" : "Click")} Per Click (CPC)\n${CPSV}x CPS Value Multiplier (CPSV)\n${CPCV}x CPC Value Multiplier (CPCV)`;
+};
+function statusClick(x="") {
+    if (!keys.Control) {return};
+    let el = document.getElementById(`tcookie-${x}`);
+    if (el) {
+        let t = el.title;
+        let a = null;
+        try {
+            a = HELP[x];
+        } catch (error) {};
+        openPrompt(`Help: ${x}`,"Close","","",null,a || t);
+    };
+};
+updateCookies(0);
+updateStatus();
 
 var clickCooldown = false;
 
@@ -569,14 +760,145 @@ const cookie = new button(
 
 cookie.create();
 
+const catCtl = {
+    "vs": {"collapse":false},
+    "vu": {"collapse":false}
+};
+
+function dispShownItems(id) {
+    if (keys.Control) {
+        let el = document.getElementById(id);
+        if (el) {
+            let t = el.title;
+            let count = t.split('/')[0];
+            let total = t.split('/')[1].split(' ')[0];
+            openPrompt("<span style='line-height: 7vh; font-size: 7vh;'>Help: Hidden Items</span>","Close","","",null,`${count} items are shown out of a total of ${total} items.<br>${(count==total) ? "This means you have already unlocked all items in this category!":"This could mean that some items have yet to be unlocked, or that some items may have already been purchased the maximum amount of times!"}`);
+        };
+    } else {
+        let v = catCtl[id]["collapse"];
+        catCtl[id]["collapse"] = !v;
+        if (id == "vs") {
+            shopItems.forEach(x=>{
+                x.forceHide = !v;
+            });
+        } else if (id == "vu") {
+            upgrItems.forEach(x=>{
+                x.forceHide = !v;
+            });
+        };
+    };
+};
+
+function updateStore() {
+    let count = 0;
+    for (let i = 0; i < shopItems.length; i++) {
+        const x = shopItems[i];
+        let el = document.getElementById(x.id);
+        if (el && el.style.display != "none") {
+            count++;
+        };
+    };
+    let el = document.getElementById("vs");
+    el.innerHTML = `${(!catCtl["vs"]["collapse"]) ? "":"<u>"}<hr>v Shop (${count}) v<hr>${(!catCtl["vs"]["collapse"]) ? "":"<u>"}`;
+    el.title = `${count}/${shopItems.length} items are currently shown.\nClick to collapse/expand Shop.`;
+    count = 0;
+    for (let i = 0; i < upgrItems.length; i++) {
+        const x = upgrItems[i];
+        let el = document.getElementById(x.id);
+        if (el && el.style.display != "none") {
+            count++;
+        };
+    };
+    el = document.getElementById("vu");
+    el.innerHTML = `${(!catCtl["vu"]["collapse"]) ? "":"<u>"}<hr>v Upgrades (${count}) v<hr>${(!catCtl["vu"]["collapse"]) ? "":"</u>"}`;
+    el.title = `${count}/${upgrItems.length} items are currently shown.\nClick to collapse/expand Upgrades.`;
+
+    shopItems.forEach(x=>{
+        if (x.forceHide) {
+            let el = document.getElementById(x.id);
+            if (el) {
+                el.style.display = "none";
+            };
+        };
+    });
+    upgrItems.forEach(x=>{
+        if (x.forceHide) {
+            let el = document.getElementById(x.id);
+            if (el) {
+                el.style.display = "none";
+            };
+        };
+    });
+};
+updateStore();
+
 setInterval(function() {
     updateCookies(COOKIES+CPS);
 },1000);
 
+const helpElements = [
+    ["vs","pointer"],
+    ["vu","pointer"],
+    ["tcookie-C","default"],
+    ["tcookie-CPS","default"],
+    ["tcookie-CPC","default"],
+    ["tcookie-CPSV","default"],
+    ["tcookie-CPCV","default"]
+]
+
+// yuck this is not a good way 2 do this T-T
+setInterval(function() {
+    updateItems.forEach(x => {
+        x.updateText();
+    });
+    updateStore();
+    if (keys.Control) {
+        document.body.style.cursor = "help";
+        helpElements.forEach(x=>{
+            let el = document.getElementById(x[0]);
+            if (el) {
+                el.style.cursor = "help";
+            };
+        });
+    } else {
+        document.body.style.cursor = "default";
+        helpElements.forEach(x=>{
+            let el = document.getElementById(x[0]);
+            if (el) {
+                el.style.cursor = x[1];
+            };
+        });
+    };
+},75);
+
+
+const codes = [
+    ["cG9vcGNvY2s=",false],
+    ["dGhlc2hpZWxkaGVybw==",false]
+];
+var typed = "";
+
 window.addEventListener('keydown',function(key) {
+    if (key.code.startsWith("Key")) {
+        typed += key.key;
+        console.log(typed);
+    };
+    if (contains(typed,atob(codes[0][0])) & !codes[0][1]) {
+        typed = "";
+        codes[0][1] = true;
+        updateCookies(COOKIES + 1e6);
+    };
+    if (contains(typed,atob(codes[1][0])) & !codes[1][1]) {
+        typed = "";
+        codes[1][1] = true;
+        CPC+=1e6;
+        updateStatus("CPC");
+    };
+
     if (key.code == "ControlLeft" || key.code == "ControlRight") {
         keys["Control"] = true;
     };
+    
     if (key.key == "s") {
         if (keys["Control"]) {
             key.preventDefault();
