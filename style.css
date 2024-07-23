@@ -67,13 +67,24 @@ body {
     position: absolute;
     width: 50%;
     height: 5%;
-    margin-top: 12vh;
+    /* margin-bottom: 0vh; */
 }
 
 #prT {
-    margin-bottom: 27vh;
+    margin-bottom: calc((27vh)*1.5);
     font-family: sans-serif;
     font-size: 8vh;
+    transition: all 200ms cubic-bezier(0,1,1,1);
+    color: white;
+    position: absolute;
+}
+
+#prB {
+    width: 75%;
+    height: 40%;
+    margin-top: 2vh;
+    font-family: sans-serif;
+    font-size: 1.75vh;
     transition: all 200ms cubic-bezier(0,1,1,1);
     color: white;
     position: absolute;
@@ -106,11 +117,21 @@ body {
     font-size: 2vh;
     transition: all 200ms cubic-bezier(0,1,1,1);
 }
-#shop button:hover, #save button:hover, #prompt button:hover {
+#upgr button {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(230, 230, 230);
+    color: black;
+    cursor: pointer;
+    font-family: sans-serif;
+    font-size: 2vh;
+    transition: all 200ms cubic-bezier(0,1,1,1);
+}
+#shop button:hover, #upgr button:hover, #save button:hover, #prompt button:hover {
     scale: 1.1;
     background-color: rgb(255, 255, 255);
 }
-#shop button:active, #save button:active, #prompt button:active {
+#shop button:active, #upgr button:active, #save button:active, #prompt button:active {
     scale: .9;
     background-color: rgb(200, 200, 200);
 }
@@ -137,4 +158,12 @@ body {
     font-family: sans-serif;
     font-size: 2vh;
     transition: all 200ms cubic-bezier(0,1,1,1);
+}
+
+/* #vu, #vs {
+    cursor: help !important;
+} */
+
+#vu:hover, #vs:hover, #vu:active, #vs:active {
+    scale: 1 !important;
 }
