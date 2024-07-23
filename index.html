@@ -9,15 +9,29 @@
     <div id="loading" class="display"><b>Loading...</b></div>
     <div id="prompt" class="display">
         <p id="prT">Prompt</p>
+        <p id="prB">Body<br>Paragraph</p>
         <input id="prI">
         <button onclick="closePrompt()" id="pr0">Confirm</button>
         <button onclick="closePrompt()" id="pr1">Cancel</button>
+        <button onclick="closePrompt()" id="pr2">Test</button>
     </div>
-    <div id="tcookie" class="display" style="width: 16vw; height: 3vh;">Cookies: 0<br>CPS: 0/s<br>CPC: 1/c<br>CPSV: 1x<br>CPCV: 1x</div>
-    <div id="shop" class="display" style="width: 20vw; height: 100vh; margin-top: -3vh; margin-left: 80vw; background-color: rgb(126, 126, 126); overflow-x: hidden; overflow-y: scroll;"></div>
+    <div id="tcookie" class="display" style="width: 16vw; height: 3vh;">
+        <span onclick="statusClick('C')" style="cursor: help;" id="tcookie-C">0C</span><br>
+        <span onclick="statusClick('CPS')" style="cursor: help;" id="tcookie-CPS">0C/c</span><br>
+        <span onclick="statusClick('CPC')" style="cursor: help;" id="tcookie-CPC">0C/s</span><br>
+        <span onclick="statusClick('CPSV')" style="cursor: help;" id="tcookie-CPSV">0xCPSV</span><br>
+        <span onclick="statusClick('CPCV')" style="cursor: help;" id="tcookie-CPCV">0xCPCV</span>
+    </div>
+    <div id="upgr" class="display" style="width: 20vw; height: 10vh; margin-top: -3vh; margin-left: 80vw; background-color: rgb(126, 126, 126); overflow-x: hidden; overflow-y: scroll;">
+        <button onclick="dispShownItems('vu')" title="0/0 items are currently shown." id="vu" border: 0;"><hr>v Upgrades (0) v<hr></button>
+    </div>
+    <div id="shop" class="display" style="width: 20vw; height: 90vh; margin-top: 0vh; margin-left: 80vw; background-color: rgb(126, 126, 126); overflow-x: hidden; overflow-y: scroll;">
+        <button onclick="dispShownItems('vs')" title="0/0 items are currently shown." id="vs" border: 0;"><hr>v Shop (0) v<hr></button>
+    </div>
     <div class="display" id="save">
         <button id="bsave" title="CTRL+S" onclick="getSaveCode()">Save</button>
         <button id="bload" title="CTRL+L" onclick="loadSaveCode()">Load</button>
+        <button id="bhelp" title="Hold CTRL to enter Help Mode!" onclick="openHelp()">Help</button>
     </div>
 </body>
 <script src="index.js"></script>
