@@ -53,13 +53,14 @@ const HELP = { // This is used to store text for certain things. Used for help p
         You gain CPCV by purchasing upgrades from the shop such as the More Efficient Super Clicks.<br>
         These shop upgrades will also apply the new CPCV value to your current CPC!
     `,
+    // "Home" should ALWAYS be the last entry.
     "Home": `
         Welcome to Help!<br>
         Here you can flip through all of the Help pages.<br>
         Instead of using this, you can also just hold CTRL to turn on Help mode and click on a supported element!<br>
-        Supported elements will turn add a little '?' to your cursor when hovering over items while in Help mode.<br>
+        Supported elements will retain the little '?' next to your cursor when hovering over them in Help mode.<br>
         Also, most elements (both supported and unsupported by Help mode) will show a little tip when hovering over them!<br>
-        Some will show keys you can press instead of clicking them (eg. Space will click the clicker)!
+        Some tips will show what key(s) you can press instead of clicking on the element (eg. Space will click the clicker)!
     `
 };
 
